@@ -1,0 +1,108 @@
+{@import https://raw.githubusercontent.com/central7/pom/main/pom.jim}
+{@import version.jim}
+{@define default($_,$x)=<$_>{#if |$x|$x</$_>}}
+{project yamaledtest}
+    {packaging jar}
+    {GAV :{GROUPID}:yamaledt:{VERSION}}
+    {description Library to support JUnit 5 parametrized tests that fetch the parameters from Yaml file}
+    {license|The Apache License, Version 2.0|http://www.apache.org/licenses/LICENSE-2.0.txt}
+    {developer|Peter Verhas|peter@verhas.com}
+    {github|verhas|yamaletdtest}
+    {properties|
+        {property :project.build.sourceEncoding:UTF-8}
+    }
+    {distributionManagement|
+        {snapshotRepository |ossrh|https://oss.sonatype.org/content/repositories/snapshots}
+        {repository |ossrh|https://oss.sonatype.org/service/local/staging/deploy/maven2/}
+    }
+    {build|
+        {plugins|
+            {plugin|{GAV :org.sonatype.plugins:nexus-staging-maven-plugin: }}
+            {plugin|
+                {GAV :org.apache.maven.plugins:maven-source-plugin:{MAVEN_SOURCE_PLUGIN_VERSION}}
+                {executions|
+                    {execution|
+                        {id|attach-sources}
+                        {goals|{goal|jar}}
+                    }
+                }
+            }
+            {plugin|
+                {GAV :org.apache.maven.plugins:maven-javadoc-plugin:{MAVEN_JAVADOC_PLUGIN_VERSION}}
+                {configuration|
+                    {detectOfflineLinks false}
+                    {doclint none}
+                    {doclet javax0.jamal.doclet.JamalDoclet}
+                    {docletArtifact {GAV :com.javax0.jamal:jamal-doclet:{LAST_RELEASE}}}
+                    {additionalOptions
+                        {additionalOption |--source-root}
+                        {additionalOption {```````@escape ``${project.build.sourceDirectory}``}}
+                    }
+                    {taglets|
+                        {taglet|
+                            {tagletClass javax0.jamal.doclet.JamalTaglet}
+                            {tagletArtifact {GAV :com.javax0.jamal:jamal-doclet:{LAST_RELEASE}}}
+                        }
+                        {tagletArtifacts
+                            {tagletArtifact {GAV :com.javax0.jamal:jamal-io:{LAST_RELEASE}}}
+                        }
+                    }
+                }
+                {executions|{execution|
+                        {id|attach-javadocs}
+                        {goals|{goal|jar}}}}
+            }
+            {plugin|
+                {GAV :org.apache.maven.plugins:maven-compiler-plugin:{MAVEN_COMPILER_PLUGIN_VERSION}}
+                <configuration>
+                    <source>{JAVA_SOURCE}</source>
+                    <target>{JAVA_TARGET}</target>
+                    <release>{JAVA_RELEASE}</release>
+                </configuration>
+            }
+
+            {plugin|
+                {GAV :org.apache.maven.plugins:maven-surefire-plugin:3.0.0-M4}
+                {configuration|
+                    {argLine|
+                        --add-opens yamaledt/javax0.yamaledt=org.junit.platform.commons
+                    }
+                }
+            }
+            {plugin|
+                  {GAV :org.sonatype.plugins:nexus-staging-maven-plugin:1.6.7}
+                  {extensions :true}
+                  {configuration|
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                  }
+            }
+        }
+    }
+    {dependencies|
+      {@for MODULE in (api,engine,params)={dependency :org.junit.jupiter:junit-jupiter-MODULE:5.2.0:}}
+      {dependency :org.yaml:snakeyaml:{SNAKEYAML_VERSION}}
+      {dependency :ognl:ognl:{OGNL_VERSION}}
+      {dependency :com.javax0.jamal:jamal-engine:{JAMAL_VERSION}}
+      {dependency :com.javax0.jamal:jamal-yaml:{JAMAL_VERSION}}
+      {dependency :com.javax0.jamal:jamal-snippet:{JAMAL_VERSION}}
+    }
+
+    {profiles|
+        {profile release}
+            {build|
+                {plugins|
+                    {plugin|
+                        {GAV :org.apache.maven.plugins:maven-gpg-plugin:{MAVEN_GPG_PLUGIN_VERSION}}
+                        {executions|{execution
+                            {id :sign-artifacts}
+                            {phase :verify}
+                            {goals|{goal :sign}}
+                        }}
+                    }
+                }
+           }
+        {end profile}
+    }
+{end project}

@@ -1,0 +1,53 @@
+{%@comment
+First we define a yaml structure and name it `testSuite`. The value of it is {} because it has to be an empty map.
+It is an error leaving it just empty, because in that case `testSuite` will be `null` and we willnot be able to add
+anything to a `null`. We can add only to a Map or to a List.
+%}
+{%@yaml:define testSuite= {}%}
+
+{%@comment
+  We define a macro with 5 parameters so that we do not need to type so much.
+  In this case it may be a bit overkill, but as an example we have to be short.
+%}
+{%@define customer($testName,$serial,$name,$weight,$result)=
+{%@comment
+  When the macro is used it will result the following `yaml:add` output with the arguments having the actual values.
+  When the macro is used the output will also be evaluated, thus the Yaml structure will be added to the already
+  existing map structure we named `testSuite`.
+%}
+{%@yaml:add to=testSuite key=$testName
+CustomClass: !!javax0.yamaledt.CustomClass
+  serial: $serial
+  name: $name
+  weight: $weight
+result: $result
+%}%}
+{%@comment
+  This defines a special user defined macro. The value of the macro is 1 and every time we use it increases
+  its value by one. It is implemented in the snippet macro package.
+%}
+{%@counter:define id=serial%}
+{%@comment
+
+  Here we define the two test data arguments using macros. They get added to the `testSuite`.
+
+%}
+{%customer/"test 1"/{%serial%}/Pinko Palino/33.52/1.Pinko Palino.33.52%}
+{%customer/"test 2"/{%serial%}/Panko Palina/6.666E1/2.Panko Palina.66.66%}
+
+  So far we have not generated any output except some new lines.
+  The previous is the very first line we are generating to the output.
+  All the macros we used `comment`, `define`, `yaml:define` and so on produce empty string.
+  They have some side effect (except `comment`, which really does not do anything), defining
+  user defined macro, named Yaml structure in the user defined macro storage or modify one,
+  but their output is empty string.
+
+  The next macro says that after the whole helter skelter is finished, we have to take the Yaml structure
+  stored in the Yaml macro `testSuite` and whatever was generated as output has to be replaced with the
+  nicely formatted value of this macro.
+
+  This is the reason I did not use in this last case the {%@comment and %}. The text is thrown away
+  anyway. I simply could omit all the other comments macros and I could just write the text into the file
+  plain and simple.
+
+{%@yaml:output testSuite%}

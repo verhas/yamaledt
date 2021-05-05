@@ -1,0 +1,12 @@
+"test 1":
+  CustomClass: !!javax0.yamaledt.CustomClass
+    serial: 1
+    name: Pinko Palino
+    weight: 33.52
+  result: 1.Pinko Palino.33.52
+"test 2":
+  CustomClass: !!javax0.yamaledt.CustomClass
+    serial: 2
+    name: Panko Palina
+    weight: 6.666E1
+  result: 2.Panko Palina.66.66
