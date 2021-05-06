@@ -72,7 +72,7 @@
                     </docletArtifact>
                     <additionalOptions>
                         <additionalOption>--source-root</additionalOption>
-                        <additionalOption>{@escape ``${project.build.sourceDirectory}``}</additionalOption>
+                        <additionalOption>${project.build.sourceDirectory}</additionalOption>
                     </additionalOptions>
                     <taglets>
                         <taglet>

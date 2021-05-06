@@ -23,6 +23,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static java.lang.String.format;
@@ -40,38 +41,130 @@ public class YamalArgumentsProvider implements ArgumentsProvider {
         final Jamal jamal = getJamalAnnotation(testMethod, testClass, yamlSource);
         final var resourceName = yamlSource.value().length() == 0 ? testMethod.getName() + defaultExtension(jamal) : yamlSource.value();
 
-        final Object parameters = getParameters(testClass, jamal, resourceName);
+        final Map<String, Map<String, Object>> parameters = getParameters(testClass, jamal, resourceName);
 
+        return createArgumentsStream(testMethod, resourceName, parameters, yamlSource.strict());
+    }
+
+    /**
+     * Create the streams for the arguments.
+     *
+     * @param testMethod   the method to be tested.
+     * @param resourceName the name of the resource from where the parameters were read. It is needed only to report
+     *                     error in some exception in case there is some wrong formatting in the Yaml file.
+     * @param parameters   the yaml structure holding the test parameters
+     * @param strict       check that there are no extra, ignored parameters in the Yaml data set
+     * @return the stream of arguments composed
+     */
+    private Stream<Arguments> createArgumentsStream(java.lang.reflect.Method testMethod, String resourceName, Map<String, Map<String, Object>> parameters, boolean strict) {
         final var list = new ArrayList<Arguments>();
         try {
-            for (final var testYaml : ((Map<String, Map<String, Object>>) parameters).entrySet()) {
+            final String[] names = getNames(testMethod);
+            final var nameSet = Set.of(names);
+            for (final var testYaml : parameters.entrySet()) {
                 final var displayName = testYaml.getKey();
                 Object[] para = new Object[testMethod.getParameters().length];
-                int i = 0;
-                for (final var parameter : testMethod.getParameters()) {
-                    final var name = findAnnotation(parameter, Name.class).map(Name::value)
-                        .orElseGet(() -> parameter.getType().getSimpleName());
+                for (int i = 0; i < names.length; i++) {
+                    final String name = names[i];
                     if ("DisplayName".equals(name)) {
-                        if (parameter.getType() == DisplayName.class) {
-                            para[i] = new DisplayName(displayName);
-                        } else {
-                            para[i] = displayName;
-                        }
+                        setDisplayName(displayName, para, i, testMethod.getParameters()[i].getType() == DisplayName.class);
                     } else {
+                        if (strict && !testYaml.getValue().containsKey(name)) {
+                            throw new ExtensionConfigurationException(
+                                format("The parameter '%s' in the test record '%s' of the test %s::%s() is not defined",
+                                    name,
+                                    displayName,
+                                    testMethod.getDeclaringClass().getName(), testMethod.getName()));
+                        }
                         para[i] = testYaml.getValue().get(name);
                     }
-                    i++;
                 }
                 list.add(Arguments.of(para));
+                if (strict) {
+                    for (final var key : testYaml.getValue().keySet()) {
+                        if (!nameSet.contains(key)) {
+                            throw new ExtensionConfigurationException(
+                                format("There is an extra key '%s' in the test record '%s' of the test %s::%s()",
+                                    key,
+                                    displayName,
+                                    testMethod.getDeclaringClass().getName(), testMethod.getName()));
+                        }
+                    }
+                }
             }
         } catch (ClassCastException cce) {
             throw new ExtensionConfigurationException(format("The YAML source '%s' is not valid.", resourceName));
         }
-
         return list.stream();
     }
 
-    private Object getParameters(Class<?> testClass, Jamal jamal, String resourceName) throws URISyntaxException {
+    private String[] getNames(java.lang.reflect.Method testMethod) {
+        final String[] names = new String[testMethod.getParameterCount()];
+        int displayNameIndex = -1;
+        for (int i = 0; i < names.length; i++) {
+            final var parameter = testMethod.getParameters()[i];
+            names[i] = getName(parameter);
+            if (parameter.getType() == DisplayName.class) {
+                if (displayNameIndex == -1) {
+                    displayNameIndex = i;
+                } else {
+                    throw new ExtensionConfigurationException(format("The test method %s::%s cannot have more than one parameter of the type %s",
+                        testMethod.getDeclaringClass().getName(), testMethod.getName(),
+                        DisplayName.class.getSimpleName()));
+                }
+            }
+        }
+        return names;
+    }
+
+    /**
+     * Get the name of the parameter. Since the Java variable name is not available during run-time there are two
+     * possibilities. The parameter may be annotated with the annotation {@link Name} or the name of the type of the
+     * parameter is used.
+     * <p>
+     * The second option is a shorthand in case there are no more parameters of the same time and the type of the
+     * parameter is expressive enough. In other cases the {@link Name} annotation should be used.
+     *
+     * @param parameter the parameter of which we want the name of
+     * @return the name of the parameter
+     */
+    private String getName(java.lang.reflect.Parameter parameter) {
+        final var name = findAnnotation(parameter, Name.class).map(Name::value)
+            .orElseGet(() -> parameter.getType().getSimpleName());
+        return name;
+    }
+
+    /**
+     * Set the parameter to be the display name for this test.
+     *
+     * @param displayName         if the value of the display name to be displayed when the test is running with these
+     *                            parameters
+     * @param para                the array of the parameters
+     * @param i                   this is the index in the parameter array to set the value to
+     * @param useDisplayNameClass signals that the we have to create a {@link DisplayName} object containing the {@code
+     *                            displayName} string. If it is {@code false} then the string from the Yaml file will
+     *                            directly be used.
+     */
+    private void setDisplayName(String displayName, Object[] para, int i, boolean useDisplayNameClass) {
+        if (useDisplayNameClass) {
+            para[i] = new DisplayName(displayName);
+        } else {
+            para[i] = displayName;
+        }
+    }
+
+    /**
+     * Get the test parameters in an Object as read from the Yaml/Jamal file.
+     *
+     * @param testClass    the class that the test method is in. This is used to identify the location of the resource.
+     *                     The test data file is read from the same directory where the class is.
+     * @param jamal        the Jamal annotation. It is used to get access to the Jamal parameters (e.g.: macro opening
+     *                     and closing strings) as well as to know if Jamal processing is enabled.
+     * @param resourceName the name of the resource file that contains the Yaml/Jamal formatted parameters
+     * @return the Yaml structure read from the file
+     * @throws URISyntaxException if the file cannot be identified
+     */
+    private Map<String, Map<String, Object>> getParameters(Class<?> testClass, Jamal jamal, String resourceName) throws URISyntaxException {
         final StringBuilder sb = readResource(testClass, resourceName);
         try {
             final var file = Paths.get(testClass.getResource(resourceName).toURI()).toFile().getAbsoluteFile();
@@ -84,6 +177,14 @@ public class YamalArgumentsProvider implements ArgumentsProvider {
         }
     }
 
+    /**
+     * Reads the content of the resource.
+     *
+     * @param testClass    the class that contains the test methof. The resource will be read from the same
+     *                     package/directory where the class file is.
+     * @param resourceName the local name of the resource. It is relative to the class name.
+     * @return the content of the resource as a StringBuilder.
+     */
     private StringBuilder readResource(Class<?> testClass, String resourceName) {
         final StringBuilder sb = new StringBuilder();
         try (final var is = testClass.getResourceAsStream(resourceName)) {
@@ -103,18 +204,36 @@ public class YamalArgumentsProvider implements ArgumentsProvider {
         return sb;
     }
 
+    /**
+     * Process the input using Jamal. The processing takes only place when Jamal processing is enabled. If Jamal
+     * processing is not enabled then the return value is the same as the input in {@code sb}.
+     * <p>
+     * The code also dumps the result into a file in case the Jamal annotation defines a dump file.
+     *
+     * @param jamal is the annotation instance that tells if Jamal processing is enabled
+     * @param file  the file where the resource is. It is used to calculate the absolute path that can be used by the
+     *              Jamal processor in case the Jamal source file is including or importing some other files. It may not
+     *              work in case the resource is inside a JAR file. This parameter is also used to identify the
+     *              directory where the input file is. This directory is used when the Jamal output is to be dumped for
+     *              debugging purpose.
+     * @param sb    the input already read from the resource file through an input stream. This works even if the file
+     *              is inside a JAR file.
+     * @return the processed string that is already YAML format (hopefully)
+     * @throws BadSyntax if there is something wrong while processing the text using Jamal.
+     */
     private String processWithJamal(Jamal jamal, File file, StringBuilder sb) throws BadSyntax {
         final var path = file.getPath();
         final String processed;
         if (jamal.enabled()) {
-            final var processor = new Processor(jamal.open(), jamal.close());
-            processed = processor.process(Input.makeInput(sb.toString(), new Position(path)));
-            if (jamal.dump().length() > 0) {
-                final var out = new File(file.getParentFile(), jamal.dump());
-                try (final var fos = new FileOutputStream(out)) {
-                    fos.write(processed.getBytes(StandardCharsets.UTF_8));
-                } catch (IOException e) {
-                    throw new ExtensionConfigurationException(format("Cannot write the dump file '%s'.", jamal.dump()), e);
+            try (final var processor = new Processor(jamal.open(), jamal.close())) {
+                processed = processor.process(Input.makeInput(sb.toString(), new Position(path)));
+                if (jamal.dump().length() > 0) {
+                    final var out = new File(file.getParentFile(), jamal.dump());
+                    try (final var fos = new FileOutputStream(out)) {
+                        fos.write(processed.getBytes(StandardCharsets.UTF_8));
+                    } catch (IOException e) {
+                        throw new ExtensionConfigurationException(format("Cannot write the dump file '%s'.", jamal.dump()), e);
+                    }
                 }
             }
         } else {
@@ -123,6 +242,14 @@ public class YamalArgumentsProvider implements ArgumentsProvider {
         return processed;
     }
 
+    /**
+     * The default extension is {@code .yaml.jam} in case Jamal is enabled, which is the default. If Jamal is disabled
+     * then the default extension is {@code .yaml}.
+     *
+     * @param jamal the annotation telling if Jamal processing is enabled
+     * @return the default extension for the input file in case there is no file specified and the resource name is
+     * calculated from the name of the test method
+     */
     private String defaultExtension(Jamal jamal) {
         return jamal.enabled() ? ".yaml.jam" : ".yaml";
     }

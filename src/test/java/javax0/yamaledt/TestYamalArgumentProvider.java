@@ -33,7 +33,7 @@ public class TestYamalArgumentProvider {
     // snippet sampleTestWithSimpleParameters
     @ParameterizedTest(name = "{0}")
     @Jamal(enabled = false)
-    @YamlSource
+    @YamlSource(strict = true)
     void sampleTestWithSimpleParameters(@Name("DisplayName") String dn,
                                         int i,
                                         @Name("k") int k) {

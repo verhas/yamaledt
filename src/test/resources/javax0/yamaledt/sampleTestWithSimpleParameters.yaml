@@ -7,6 +7,6 @@
 "adding three to two is five":
   k: 3
   int: 2
-"using negavitve number is also okay":
+"using negative number is also okay":
   k: -1
   int: 6

@@ -36,7 +36,7 @@
                     {docletArtifact {GAV :com.javax0.jamal:jamal-doclet:{JAMAL_VERSION}}}
                     {additionalOptions
                         {additionalOption |--source-root}
-                        {additionalOption {```````@escape ``${project.build.sourceDirectory}``}}
+                        {additionalOption {``````@escape ``${project.build.sourceDirectory}``}}
                     }
                     {taglets|
                         {taglet|
