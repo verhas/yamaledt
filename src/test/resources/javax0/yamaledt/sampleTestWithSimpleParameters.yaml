@@ -1,0 +1,12 @@
+"adding zero to five is five":
+  int: 5
+  k: 0
+"adding one to four is five":
+  int: 4
+  k: 1
+"adding three to two is five":
+  k: 3
+  int: 2
+"using negavitve number is also okay":
+  k: -1
+  int: 6

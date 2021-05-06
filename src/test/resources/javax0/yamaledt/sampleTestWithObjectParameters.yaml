@@ -1,0 +1,5 @@
+"adding null to five is five":
+  int: 5
+"adding zero to five is five":
+  int: 5
+  k: 0

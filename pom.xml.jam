@@ -33,7 +33,7 @@
                     {detectOfflineLinks false}
                     {doclint none}
                     {doclet javax0.jamal.doclet.JamalDoclet}
-                    {docletArtifact {GAV :com.javax0.jamal:jamal-doclet:{LAST_RELEASE}}}
+                    {docletArtifact {GAV :com.javax0.jamal:jamal-doclet:{JAMAL_VERSION}}}
                     {additionalOptions
                         {additionalOption |--source-root}
                         {additionalOption {```````@escape ``${project.build.sourceDirectory}``}}
@@ -41,10 +41,10 @@
                     {taglets|
                         {taglet|
                             {tagletClass javax0.jamal.doclet.JamalTaglet}
-                            {tagletArtifact {GAV :com.javax0.jamal:jamal-doclet:{LAST_RELEASE}}}
+                            {tagletArtifact {GAV :com.javax0.jamal:jamal-doclet:{JAMAL_VERSION}}}
                         }
                         {tagletArtifacts
-                            {tagletArtifact {GAV :com.javax0.jamal:jamal-io:{LAST_RELEASE}}}
+                            {tagletArtifact {GAV :com.javax0.jamal:jamal-io:{JAMAL_VERSION}}}
                         }
                     }
                 }
@@ -87,6 +87,7 @@
       {dependency :com.javax0.jamal:jamal-engine:{JAMAL_VERSION}}
       {dependency :com.javax0.jamal:jamal-yaml:{JAMAL_VERSION}}
       {dependency :com.javax0.jamal:jamal-snippet:{JAMAL_VERSION}}
+      {dependency :com.javax0.jamal:jamal-debug:{JAMAL_VERSION}}
     }
 
     {profiles|

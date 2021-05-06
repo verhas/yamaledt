@@ -1,0 +1,79 @@
+== Yamaletdt -- JUnit 5 Parameterized Tests Using Yaml and Jamal
+
+=== Introduction and usage
+
+You can create parameterized unit tests fetching the data from Yaml formatted resource file using Yamaledt.
+To use the possibility add the dependency to your build configuration.
+In case of Maven, for example, add the following lines to your `dependencies` configuration part:
+
+{%@snip:xml pom=pom.xml%}\
+{%#define VERSION={%pom /project/version/text()%}%}\
+
+[source,xml]
+----
+<dependency>
+    <groupId>com.javax0.yamaledt</groupId>
+    <artifactId>yamaledt</artifactId>
+    <version>{%VERSION%}</version>
+    <scope>test</scope>
+</dependency>
+----
+
+The next step is to create a parameterized test, and the Yaml file that holds the data set for the tests.
+
+{%@snip:collect from=./src/test/java/%}
+
+[source,java]
+----
+{%@snip sampleTestWithSimpleParameters%}
+----
+
+The JUnit 5 annotation {%@java:class (format=`@$simpleName`) org.junit.jupiter.params.ParameterizedTest%} signals that this test is a parameterized test.
+The annotation {%@java:class (format=`@$simpleName`) javax0.yamaledt.YamlSource%} specifies the test data source.
+In this case all the settings are the default, there are no arguments.
+The data will be read from the resource file {%@java:method (format=`$name.yaml`) javax0.yamaledt.TestYamalArgumentProvider#sampleTestWithSimpleParameters%}.
+The name is calculated from the name of the test method and the extension `.yaml` is appended to it.
+
+NOTE: The extension by default is `.yaml.jam`.
+In the example above we disabled the Jamal processing and therefore the default extension became `.yaml`.
+Using Jamal macros in the test data file is an advanced topic.
+We do not detail it in the introduction section.
+
+The Yaml data source file contains the data in the format:
+
+[source,yaml]
+----
+{%@include [verbatim] src/test/resources/javax0/yamaledt/sampleTestWithSimpleParameters.yaml%}
+----
+
+The Yaml file describes a Map structure.
+The keys are the test names.
+These are the strings that will get into the place of the strings, which are defined using the {%@java:class (format=`@$simpleName`)org.junit.jupiter.api.DisplayName%} annotation in non-parameterized tests.
+The value for each key/test is also a Map specifying the values for the test parameters.
+
+The mapping of values can be based on
+
+* the type of the method arguments, or
+
+* the value of the annotation {%@java:class (format=`@$simpleName`)javax0.yamaledt.Name%}.
+
+In the example above we have three parameters.
+
+* One is named using {%@java:class (format="`@$simpleName(\"DisplayName\")`") javax0.yamaledt.Name%},
+
+* one unnamed, and
+
+* one named using {%@java:class (format="`@$simpleName(\"k\")`") javax0.yamaledt.Name%}.
+
+In the Yaml file the main key, is used for the parameter named 'DisplayName'.
+For the unnamed parameter the type is used, which is, in this case is `int`.
+Finally, the last parameter gets the value from the map using the key `k`.
+
+Running this test from an IDE will result a view something like this:
+
+image::images/idea_sample_run.png[]
+
+
+
+
+

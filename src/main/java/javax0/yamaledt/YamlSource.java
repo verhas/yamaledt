@@ -1,5 +1,6 @@
 package javax0.yamaledt;
 
+import javax0.yamaledt.utils.JamalDefault;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 import java.lang.annotation.ElementType;
@@ -16,4 +17,5 @@ public @interface YamlSource {
      */
     String value() default "";
 
+    Jamal jamal() default @Jamal(enabled = true, open = "\u0000");
 }
