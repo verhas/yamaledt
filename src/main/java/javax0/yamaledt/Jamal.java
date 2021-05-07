@@ -26,7 +26,7 @@ public @interface Jamal {
     String close() default "%}";
 
     /**
-     * This parameter can be used to deisble the Jamal processing
+     * This parameter can be used to disable the Jamal processing
      *
      * @return
      */

@@ -1,4 +1,4 @@
-== Yamaletdt -- JUnit 5 Parameterized Tests Using Yaml and Jamal
+== Yamaledt -- JUnit 5 Parameterized Tests Using Yaml and Jamal
 
 === Introduction and usage
 
@@ -25,7 +25,7 @@ The next step is to create a parameterized test, and the Yaml file that holds th
 ----
     @ParameterizedTest(name = "{0}")
     @Jamal(enabled = false)
-    @YamlSource
+    @YamlSource(strict = true)
     void sampleTestWithSimpleParameters(@Name("DisplayName") String dn,
                                         int i,
                                         @Name("k") int k) {
@@ -58,7 +58,7 @@ The Yaml data source file contains the data in the format:
 "adding three to two is five":
   k: 3
   int: 2
-"using negavitve number is also okay":
+"using negative number is also okay":
   k: -1
   int: 6
 ----
@@ -89,5 +89,55 @@ Finally, the last parameter gets the value from the map using the key `k`.
 Running this test from an IDE will result a view something like this:
 
 image::images/idea_sample_run.png[]
+
+=== Annotation `@YamlSource`
+
+The annotation `@YamlSource` is used to specify parameters for the test.
+You have to use it together with the annotation `@ParameterizedTest`.
+The parameters of the annotation are:
+
+* `value` may specify the file that holds the test data.
+If it is not specified then the name of the name of the test method will be used with the extension `.yaml.jam` or `.yaml`.
+The extension `.yaml.jam` is used by default.
+The extension `.yaml` is used when the `@Jamal` annotation `enabled=false` disables the Jamal processing.
+If there is a specified value, then the value is used as a resource name, and no extension is appended to the name.
+That way you have to specify `@YamlSource("testData.yaml")`.
+
+* `jamal` may specify a `@Jamal` annotation.
+The use of this parameter is not recommended.
+The same result can be achieved adding the `@Jamal` annotation directly on the test method or on the class containing the test method.
+
+=== Annotation `@Jamal`
+
+The annotation `@Jamal` is used to specify parameters for the input Jamal processing.
+
+Jamal is a general purpose text preprocessor that can go to extreme to eliminate input redundancy and copy-paste.
+This way the data structures that appear repeatedly in the test data structure can be described programmatically.
+Jamal supports Yaml data structure handling through an extension module, and the Jamal transformation process can be debugged via Web user interface.
+The core Jamal modules as well as the debugger module, yaml and snippet handling modules are included in the project dependencies.
+If you want to use any other module you need to add those to the project as a dependency.
+
+For more information about Jamal read the documentation at https://github.com/verhas/jamal
+
+The parameters of the annotation are
+
+* `open` can specify the macro opening string.
+This is  `{%`  by default.
+
+* `close` can specify the macro closing string
+This is  `%}`  by default.
+
+* `enabled` can be used to disable Jamal processing on the input.
+The default is to interpret the input as a macro text that results Yaml as output.
+Use `@Jamal(enabled=false)` annotation on the method to disample Jamal processing.
+When Jamal processing is disabled the default file name extension will be `.yaml` when the parameter resource name is calculated from the method name.
+
+* `dump` can be used to specify a file name where the output of the Jamal processing in written.
+This content does not need to be written into a file.
+It is processed in memory usually.
+This option is only provided in case you want to look at the generated, already pure Yaml formatted file.
+
+
+
 
 
