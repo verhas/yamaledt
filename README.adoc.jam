@@ -1,4 +1,4 @@
-== Yamaletdt -- JUnit 5 Parameterized Tests Using Yaml and Jamal
+== Yamaledt -- JUnit 5 Parameterized Tests Using Yaml and Jamal
 
 === Introduction and usage
 
@@ -72,6 +72,33 @@ Finally, the last parameter gets the value from the map using the key `k`.
 Running this test from an IDE will result a view something like this:
 
 image::images/idea_sample_run.png[]
+
+== Detailed Guide
+
+
+
+==== Annotation {%@java:class (format="`@$simpleName`") javax0.yamaledt.YamlSource%}
+
+The annotation {%@java:class (format="`@$simpleName`") javax0.yamaledt.YamlSource%} is used to specify parameters for the test.
+You have to use it together with the annotation {%@java:class (format=`@$simpleName`) org.junit.jupiter.params.ParameterizedTest%}.
+The parameters of the annotation are:
+
+* `value` may specify the file that holds the test data.
+If it is not specified then the name of the name of the test method will be used with the extension `.yaml.jam` or `.yaml`.
+The extension `.yaml.jam` is used by default.
+The extension `.yaml` is used when the `@Jamal` annotation `enabled=false` disables the Jamal processing.
+
+* `jamal` may specify a `@Jamal` annotation.
+The use of this parameter is not recommended.
+The same result can be achieved adding the `@Jamal` annotation directly on the test method or on the class containing the test method.
+
+==== Annotation {%@java:class (format="`@$simpleName`") javax0.yamaledt.Jamal%}
+
+The annotation {%@java:class (format="`@$simpleName`") javax0.yamaledt.Jamal%} is used to specify parameters for the input Jamal processing.
+
+Jamal is a general purpose text preprocessor that can go to extreme to eliminate input redundancy and copy-paste.
+
+
 
 
 

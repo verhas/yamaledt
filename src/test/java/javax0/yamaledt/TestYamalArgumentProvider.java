@@ -24,11 +24,13 @@ public class TestYamalArgumentProvider {
      *
      * @param dn is just the display name
      */
+    // snippet testDisplayNameOnly1
     @ParameterizedTest(name = "{0}")
     @YamlSource("testDisplayNameOnly.yaml.jam")
     void testDisplayNameOnly1(DisplayName dn) {
-
+        // ... actual test ...
     }
+    // end snippet
 
     // snippet sampleTestWithSimpleParameters
     @ParameterizedTest(name = "{0}")

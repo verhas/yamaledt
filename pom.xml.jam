@@ -44,7 +44,7 @@
                             {tagletArtifact {GAV :com.javax0.jamal:jamal-doclet:{JAMAL_VERSION}}}
                         }
                         {tagletArtifacts
-                            {tagletArtifact {GAV :com.javax0.jamal:jamal-io:{JAMAL_VERSION}}}
+                            {tagletArtifact {GAV :com.javax0.jamal:jamal-snippet:{JAMAL_VERSION}}}
                         }
                     }
                 }
@@ -62,15 +62,17 @@
             }
 
             {plugin|
-                {GAV :org.apache.maven.plugins:maven-surefire-plugin:3.0.0-M4}
+                {GAV :org.apache.maven.plugins:maven-surefire-plugin:{SUREFIRE_VERSION}}
                 {configuration|
                     {argLine|
                         --add-opens yamaledt/javax0.yamaledt=org.junit.platform.commons
+                        --add-exports org.junit.platform.commons/org.junit.platform.commons.util=ALL-UNNAMED
+                        --add-exports org.junit.platform.commons/org.junit.platform.commons.logging=ALL-UNNAMED
                     }
                 }
             }
             {plugin|
-                  {GAV :org.sonatype.plugins:nexus-staging-maven-plugin:1.6.7}
+                  {GAV :org.sonatype.plugins:nexus-staging-maven-plugin:{SONATYPE_PLUGIN}}
                   {extensions :true}
                   {configuration|
                     <serverId>ossrh</serverId>
@@ -81,7 +83,7 @@
         }
     }
     {dependencies|
-      {@for MODULE in (api,engine,params)={dependency :org.junit.jupiter:junit-jupiter-MODULE:5.2.0:}}
+      {@for MODULE in (api,engine,params)={dependency :org.junit.jupiter:junit-jupiter-MODULE:{JUNIT5_VERSION}:}}
       {dependency :org.yaml:snakeyaml:{SNAKEYAML_VERSION}}
       {dependency :ognl:ognl:{OGNL_VERSION}}
       {dependency :com.javax0.jamal:jamal-engine:{JAMAL_VERSION}}

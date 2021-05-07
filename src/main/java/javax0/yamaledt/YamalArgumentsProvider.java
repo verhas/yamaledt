@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
@@ -37,7 +38,7 @@ public class YamalArgumentsProvider implements ArgumentsProvider {
         final var testMethod = extensionContext.getRequiredTestMethod();
         final var testClass = testMethod.getDeclaringClass();
 
-        final YamlSource yamlSource = getYamlSourceAnnotation(testMethod, testClass);
+        final YamlSource yamlSource = getYamlSourceAnnotation(testMethod);
         final Jamal jamal = getJamalAnnotation(testMethod, testClass, yamlSource);
         final var resourceName = yamlSource.value().length() == 0 ? testMethod.getName() + defaultExtension(jamal) : yamlSource.value();
 
@@ -287,20 +288,15 @@ public class YamalArgumentsProvider implements ArgumentsProvider {
     }
 
     /**
-     * This argument provider can only be used with test methods, which are annotated with {@link YamlSource} or are in
-     * a class, which is annotated with {@link YamlSource}.
-     * <p>
-     * If the annotation is present on both the class and the method then the one on the method prevails
+     * This argument provider can only be used with test methods, which are annotated with {@link YamlSource}.
      *
      * @param testMethod the test method
-     * @param testClass  the class that the test method is declared in
      * @return the annotation object that controls the execution of this run of this argument provider
      */
-    private YamlSource getYamlSourceAnnotation(java.lang.reflect.Method testMethod, Class<?> testClass) {
+    private YamlSource getYamlSourceAnnotation(Method testMethod) {
         final var yamlSource = findAnnotation(testMethod, YamlSource.class)
-            .orElseGet(() -> findAnnotation(testClass, YamlSource.class)
-                .orElseThrow(() -> new ExtensionConfigurationException(format("Test method is not annotated with '@%s'",
-                    YamlSource.class.getSimpleName()))));
+            .orElseThrow(() -> new ExtensionConfigurationException(format("Test method is not annotated with '@%s'",
+                YamlSource.class.getSimpleName())));
         return yamlSource;
     }
 
