@@ -32,6 +32,15 @@ public class TestYamalArgumentProvider {
     }
     // end snippet
 
+    @ParameterizedTest(name = "{0}")
+    @YamlSource("test1:\n" +
+        "test2:\n" +
+        "test3:\n")
+    void testWithDataInTheAnnotation(DisplayName dn) {
+        // ... actual test ...
+    }
+
+
     // snippet sampleTestWithSimpleParameters
     @ParameterizedTest(name = "{0}")
     @Jamal(enabled = false)

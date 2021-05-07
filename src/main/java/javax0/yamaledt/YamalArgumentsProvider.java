@@ -40,11 +40,11 @@ public class YamalArgumentsProvider implements ArgumentsProvider {
 
         final YamlSource yamlSource = getYamlSourceAnnotation(testMethod);
         final Jamal jamal = getJamalAnnotation(testMethod, testClass, yamlSource);
-        final var resourceName = yamlSource.value().length() == 0 ? testMethod.getName() + defaultExtension(jamal) : yamlSource.value();
+        final var resource = yamlSource.value().length() == 0 ? testMethod.getName() + defaultExtension(jamal) : yamlSource.value();
 
-        final Map<String, Map<String, Object>> parameters = getParameters(testClass, jamal, resourceName);
+        final Map<String, Map<String, Object>> parameters = getParameters(testClass, jamal, resource);
 
-        return createArgumentsStream(testMethod, resourceName, parameters, yamlSource.strict());
+        return createArgumentsStream(testMethod, resource, parameters, yamlSource.strict());
     }
 
     /**
@@ -157,40 +157,48 @@ public class YamalArgumentsProvider implements ArgumentsProvider {
     /**
      * Get the test parameters in an Object as read from the Yaml/Jamal file.
      *
-     * @param testClass    the class that the test method is in. This is used to identify the location of the resource.
-     *                     The test data file is read from the same directory where the class is.
-     * @param jamal        the Jamal annotation. It is used to get access to the Jamal parameters (e.g.: macro opening
-     *                     and closing strings) as well as to know if Jamal processing is enabled.
-     * @param resourceName the name of the resource file that contains the Yaml/Jamal formatted parameters
+     * @param testClass the class that the test method is in. This is used to identify the location of the resource. The
+     *                  test data file is read from the same directory where the class is.
+     * @param jamal     the Jamal annotation. It is used to get access to the Jamal parameters (e.g.: macro opening and
+     *                  closing strings) as well as to know if Jamal processing is enabled.
+     * @param resource  the name of the resource file that contains the Yaml/Jamal formatted parameters
      * @return the Yaml structure read from the file
      * @throws URISyntaxException if the file cannot be identified
      */
-    private Map<String, Map<String, Object>> getParameters(Class<?> testClass, Jamal jamal, String resourceName) throws URISyntaxException {
-        final StringBuilder sb = readResource(testClass, resourceName);
+    private Map<String, Map<String, Object>> getParameters(Class<?> testClass, Jamal jamal, String resource) throws URISyntaxException {
+        final StringBuilder sb = readResource(testClass, resource);
         try {
-            final var file = Paths.get(testClass.getResource(resourceName).toURI()).toFile().getAbsoluteFile();
+            final File file;
+            if (resource.contains("\n")) {
+                file = null;
+            } else {
+                file = Paths.get(testClass.getResource(resource).toURI()).toFile().getAbsoluteFile();
+            }
             final String processed = processWithJamal(jamal, file, sb);
             return yaml.load(processed);
         } catch (BadSyntax e) {
-            throw new ExtensionConfigurationException(format("The source '%s' is not a valid Jamal source.", resourceName), e);
+            throw new ExtensionConfigurationException(format("The source '%s' is not a valid Jamal source.", resource), e);
         } catch (ParserException e) {
-            throw new ExtensionConfigurationException(format("The Yaml file '%s' is erroneous.", resourceName), e);
+            throw new ExtensionConfigurationException(format("The Yaml file '%s' is erroneous.", resource), e);
         }
     }
 
     /**
      * Reads the content of the resource.
      *
-     * @param testClass    the class that contains the test methof. The resource will be read from the same
-     *                     package/directory where the class file is.
-     * @param resourceName the local name of the resource. It is relative to the class name.
+     * @param testClass the class that contains the test method. The resource will be read from the same
+     *                  package/directory where the class file is.
+     * @param resource  the local name of the resource. It is relative to the class name.
      * @return the content of the resource as a StringBuilder.
      */
-    private StringBuilder readResource(Class<?> testClass, String resourceName) {
+    private StringBuilder readResource(Class<?> testClass, String resource) {
+        if (resource.contains("\n")) {
+            return new StringBuilder(resource);
+        }
         final StringBuilder sb = new StringBuilder();
-        try (final var is = testClass.getResourceAsStream(resourceName)) {
+        try (final var is = testClass.getResourceAsStream(resource)) {
             if (is == null) {
-                throw new ExtensionConfigurationException(format("The source '%s' is not found.", resourceName));
+                throw new ExtensionConfigurationException(format("The source '%s' is not found.", resource));
             }
             try (InputStreamReader isReader = new InputStreamReader(is, StandardCharsets.UTF_8);
                  BufferedReader reader = new BufferedReader(isReader)) {
@@ -200,7 +208,7 @@ public class YamalArgumentsProvider implements ArgumentsProvider {
                 }
             }
         } catch (IOException ioe) {
-            throw new ExtensionConfigurationException(format("The source '%s' is not readable.", resourceName), ioe);
+            throw new ExtensionConfigurationException(format("The source '%s' is not readable.", resource), ioe);
         }
         return sb;
     }
@@ -223,24 +231,57 @@ public class YamalArgumentsProvider implements ArgumentsProvider {
      * @throws BadSyntax if there is something wrong while processing the text using Jamal.
      */
     private String processWithJamal(Jamal jamal, File file, StringBuilder sb) throws BadSyntax {
-        final var path = file.getPath();
+        final var path = file == null ? "." : file.getPath();
         final String processed;
         if (jamal.enabled()) {
             try (final var processor = new Processor(jamal.open(), jamal.close())) {
                 processed = processor.process(Input.makeInput(sb.toString(), new Position(path)));
-                if (jamal.dump().length() > 0) {
-                    final var out = new File(file.getParentFile(), jamal.dump());
-                    try (final var fos = new FileOutputStream(out)) {
-                        fos.write(processed.getBytes(StandardCharsets.UTF_8));
-                    } catch (IOException e) {
-                        throw new ExtensionConfigurationException(format("Cannot write the dump file '%s'.", jamal.dump()), e);
-                    }
-                }
+                createDumpFile(jamal, file, processed);
             }
         } else {
             processed = sb.toString();
         }
         return processed;
+    }
+
+    /**
+     * Print the result of the Jamal processing into an utput file in case there is a Jamal annotation with the
+     * parameter dump, that specifies the output file. This file is not used by the application. It is there only for
+     * debug purposes in case you want to see what Yaml was created from the Jamal file.
+     *
+     * @param jamal is the Jamal annotation
+     * @param file the input file or null in case the input comes from the annotation string
+     * @param processed the Jamal processed output
+     */
+    private void createDumpFile(Jamal jamal, File file, String processed) {
+        if (jamal.dump().length() > 0) {
+            final File out = getDumpFile(jamal.dump(), file);
+            try (final var fos = new FileOutputStream(out)) {
+                fos.write(processed.getBytes(StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                throw new ExtensionConfigurationException(format("Cannot write the dump file '%s'.", jamal.dump()), e);
+            }
+        }
+    }
+
+    /**
+     * Get the dump file for the debug output. If the input comes from a file then the output fill be in the same
+     * directory as named by the annotation Jamal. If the input comes from the annotation string then the output fill go
+     * to the current working directory.
+     *
+     * @param dump the file name
+     * @param file the file to the input of null in case the input comes directly from the string given on the
+     *             annotation
+     * @return the output File object
+     */
+    private File getDumpFile(String dump, File file) {
+        final File out;
+        if (file == null) {
+            out = new File(dump);
+        } else {
+            out = new File(file.getParentFile(), dump);
+        }
+        return out;
     }
 
     /**
