@@ -8,4 +8,9 @@ public class TestConvertReadme {
     void generateDoc() throws Exception {
         DocumentConverter.convert(".//README.adoc.jam");
     }
+
+    @Test
+    void generateReleases() throws Exception {
+        DocumentConverter.convert(".//RELEASES.adoc.jam");
+    }
 }

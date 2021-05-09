@@ -8,9 +8,11 @@
 == Yamaledt -- JUnit 5 Parameterized Tests Using Yaml and Jamal
 
 === Introduction and usage
-
-NOTE: This is the latest, probably SNAPSHOT release documentation.
-For the last release visit the page https://github.com/verhas/yamaledt/tree/{%LATEST_RELEASE%}[{%LATEST_RELEASE%}]
+{%#if/{%#replace(regex)|{%VERSION%}|\d+\.\d+\.\d+-SNAPSHOT|%}//
+NOTE: This is the latest development documentation.
+This is a SNAPSHOT version.
+To see the documentation of a release you have to follow the link in the documentation `RELEASES.adoc`
+%}
 
 You can create parameterized unit tests fetching the data from Yaml formatted resource file using Yamaledt.
 To use the possibility add the dependency to your build configuration.

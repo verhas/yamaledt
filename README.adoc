@@ -2,8 +2,10 @@
 
 === Introduction and usage
 
-NOTE: This is the latest, probably SNAPSHOT release documentation.
-For the last release visit the page https://github.com/verhas/yamaledt/tree/1.0.0[1.0.0]
+NOTE: This is the latest development documentation.
+This is a SNAPSHOT version.
+To see the documentation of a release you have to follow the link in the documentation `RELEASES.adoc`
+
 
 You can create parameterized unit tests fetching the data from Yaml formatted resource file using Yamaledt.
 To use the possibility add the dependency to your build configuration.

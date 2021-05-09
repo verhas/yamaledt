@@ -1,0 +1,8 @@
+== Yamaledt Releases
+
+{%@define RELEASE($x)==== https://github.com/verhas/yamaledt/tree/$x[$x]%}
+
+
+{%RELEASE/v1.0.0%}
+
+Initial release.

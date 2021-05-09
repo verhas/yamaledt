@@ -1,0 +1,8 @@
+== Yamaledt Releases
+
+
+
+
+=== https://github.com/verhas/yamaledt/tree/v1.0.0[v1.0.0]
+
+Initial release.
