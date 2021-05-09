@@ -3,6 +3,13 @@
 {%@define RELEASE($x)==== https://github.com/verhas/yamaledt/tree/$x[$x]%}
 
 
+{%RELEASE/v1.1.0%}
+
+With this release, you can use the annotations also on the test class, and you can inherit the parameters from the class.
+With that, you can switch off Jamal processing for the whole class if you must.
+Another typical use case to use one single large Yaml input file and the individual test methods can specify OGNL expressions to point to the data structure where their data is.
+
+
 {%RELEASE/v1.0.0%}
 
 Initial release.

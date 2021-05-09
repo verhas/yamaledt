@@ -2,6 +2,10 @@
 
 === Introduction and usage
 
+NOTE: This is the latest development documentation.
+This is a SNAPSHOT version.
+To see the documentation of a release you have to follow the link in the documentation `RELEASES.adoc`
+
 
 You can create parameterized unit tests fetching the data from Yaml formatted resource file using Yamaledt.
 To use the possibility add the dependency to your build configuration.
@@ -12,7 +16,7 @@ In case of Maven, for example, add the following lines to your `dependencies` co
 <dependency>
     <groupId>com.javax0.yamaledt</groupId>
     <artifactId>yamaledt</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1-SNAPSHOT</version>
     <scope>test</scope>
 </dependency>
 ----
