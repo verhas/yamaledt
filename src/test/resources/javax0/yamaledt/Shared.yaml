@@ -1,0 +1,20 @@
+test1:
+  "empty strings concatenated is empty string":
+    a: ""
+    b: ""
+    concat: ""
+
+  "a + b = ab":
+    a: a
+    b: b
+    concat: ab
+test2:
+  "empty strings concatenated is empty string":
+    a: ""
+    b: ""
+    concat: "."
+
+  "a + b = a.b":
+    a: a
+    b: b
+    concat: a.b

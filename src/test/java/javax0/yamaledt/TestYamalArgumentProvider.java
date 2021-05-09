@@ -1,6 +1,7 @@
 package javax0.yamaledt;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.params.ParameterizedTest;
 
 import static java.lang.String.format;
@@ -40,6 +41,14 @@ public class TestYamalArgumentProvider {
         // ... actual test ...
     }
 
+    @ParameterizedTest(name = "{0}")
+    @YamlSource(value = "test:\n" +
+        "  test1:\n" +
+        "  test2:\n" +
+        "  test3:\n", ognl = "test")
+    void testWithDataInTheAnnotationAndOgnl(DisplayName dn) {
+        // ... actual test ...
+    }
 
     // snippet sampleTestWithSimpleParameters
     @ParameterizedTest(name = "{0}")
@@ -75,4 +84,28 @@ public class TestYamalArgumentProvider {
     void testCustomClassParameter1(@Name("DisplayName") String dn, CustomClass customer, @Name("result") String r) {
         Assertions.assertEquals(r, format("%d.%s.%s", customer.serial, customer.name, customer.weight));
     }
+
+    @YamlSource("Shared.yaml")
+    @Nested
+    class TestInner {
+        @Jamal(enabled = false)
+        @Nested
+        class TestInnerInner {
+
+            @ParameterizedTest(name = "{0}")
+            @YamlSource(ognl = "test1")
+            @org.junit.jupiter.api.DisplayName("Inner Inner Concatenate")
+            void test1(@Name("DisplayName") String dn, @Name("a") String a, @Name("b") String b, @Name("concat") String concat) {
+                Assertions.assertEquals(concat, a + b);
+            }
+
+            @ParameterizedTest(name = "{0}")
+            @YamlSource(ognl = "test2")
+            @org.junit.jupiter.api.DisplayName("Inner Inner . Concatenate")
+            void test2(@Name("DisplayName") String dn, @Name("a") String a, @Name("b") String b, @Name("concat") String concat) {
+                Assertions.assertEquals(concat, a + "."+b);
+            }
+        }
+    }
+
 }

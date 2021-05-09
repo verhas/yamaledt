@@ -6,5 +6,6 @@ module yamaledt {
     requires jamal.tools;
     requires jamal.api;
     requires snakeyaml;
+    requires ognl;
     exports javax0.yamaledt;
 }

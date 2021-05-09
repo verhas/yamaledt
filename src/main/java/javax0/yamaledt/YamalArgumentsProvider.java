@@ -4,7 +4,8 @@ import javax0.jamal.api.BadSyntax;
 import javax0.jamal.api.Position;
 import javax0.jamal.engine.Processor;
 import javax0.jamal.tools.Input;
-import javax0.yamaledt.utils.JamalDefault;
+import ognl.Ognl;
+import ognl.OgnlException;
 import org.junit.jupiter.api.extension.ExtensionConfigurationException;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
@@ -17,17 +18,19 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 import static org.junit.platform.commons.support.AnnotationSupport.findAnnotation;
 
 public class YamalArgumentsProvider implements ArgumentsProvider {
@@ -39,10 +42,10 @@ public class YamalArgumentsProvider implements ArgumentsProvider {
         final var testClass = testMethod.getDeclaringClass();
 
         final YamlSource yamlSource = getYamlSourceAnnotation(testMethod);
-        final Jamal jamal = getJamalAnnotation(testMethod, testClass, yamlSource);
+        final Jamal jamal = getJamalAnnotation(testMethod);
         final var resource = yamlSource.value().length() == 0 ? testMethod.getName() + defaultExtension(jamal) : yamlSource.value();
 
-        final Map<String, Map<String, Object>> parameters = getParameters(testClass, jamal, resource);
+        final Map<String, Map<String, Object>> parameters = getParameters(testClass, jamal, resource, yamlSource.ognl());
 
         return createArgumentsStream(testMethod, resource, parameters, yamlSource.strict());
     }
@@ -66,37 +69,48 @@ public class YamalArgumentsProvider implements ArgumentsProvider {
                 final var displayName = testYaml.getKey();
                 Object[] para = new Object[testMethod.getParameters().length];
                 for (int i = 0; i < names.length; i++) {
-                    final String name = names[i];
-                    if ("DisplayName".equals(name)) {
-                        setDisplayName(displayName, para, i, testMethod.getParameters()[i].getType() == DisplayName.class);
-                    } else {
-                        if (strict && !testYaml.getValue().containsKey(name)) {
-                            throw new ExtensionConfigurationException(
-                                format("The parameter '%s' in the test record '%s' of the test %s::%s() is not defined",
-                                    name,
-                                    displayName,
-                                    testMethod.getDeclaringClass().getName(), testMethod.getName()));
-                        }
-                        para[i] = testYaml.getValue().get(name);
-                    }
+                    setParameter(testMethod, strict, testYaml, displayName, para, i, names[i]);
                 }
                 list.add(Arguments.of(para));
-                if (strict) {
-                    for (final var key : testYaml.getValue().keySet()) {
-                        if (!nameSet.contains(key)) {
-                            throw new ExtensionConfigurationException(
-                                format("There is an extra key '%s' in the test record '%s' of the test %s::%s()",
-                                    key,
-                                    displayName,
-                                    testMethod.getDeclaringClass().getName(), testMethod.getName()));
-                        }
-                    }
-                }
+                strictCheckExtra(testMethod, strict, nameSet, testYaml, displayName);
             }
         } catch (ClassCastException cce) {
             throw new ExtensionConfigurationException(format("The YAML source '%s' is not valid.", resourceName));
         }
         return list.stream();
+    }
+
+    private void setParameter(Method testMethod, boolean strict, Map.Entry<String, Map<String, Object>> testYaml, String displayName, Object[] para, int i, String name) {
+        if ("DisplayName".equals(name)) {
+            setDisplayName(displayName, para, i, testMethod.getParameters()[i].getType() == DisplayName.class);
+        } else {
+            strictCheckMissing(testMethod, strict, testYaml, displayName, name);
+            para[i] = testYaml.getValue().get(name);
+        }
+    }
+
+    private void strictCheckExtra(Method testMethod, boolean strict, Set<String> nameSet, Map.Entry<String, Map<String, Object>> testYaml, String displayName) {
+        if (strict) {
+            for (final var key : testYaml.getValue().keySet()) {
+                if (!nameSet.contains(key)) {
+                    throw new ExtensionConfigurationException(
+                        format("There is an extra key '%s' in the test record '%s' of the test %s::%s()",
+                            key,
+                            displayName,
+                            testMethod.getDeclaringClass().getName(), testMethod.getName()));
+                }
+            }
+        }
+    }
+
+    private void strictCheckMissing(Method testMethod, boolean strict, Map.Entry<String, Map<String, Object>> testYaml, String displayName, String name) {
+        if (strict && !testYaml.getValue().containsKey(name)) {
+            throw new ExtensionConfigurationException(
+                format("The parameter '%s' in the test record '%s' of the test %s::%s() is not defined",
+                    name,
+                    displayName,
+                    testMethod.getDeclaringClass().getName(), testMethod.getName()));
+        }
     }
 
     private String[] getNames(java.lang.reflect.Method testMethod) {
@@ -162,24 +176,32 @@ public class YamalArgumentsProvider implements ArgumentsProvider {
      * @param jamal     the Jamal annotation. It is used to get access to the Jamal parameters (e.g.: macro opening and
      *                  closing strings) as well as to know if Jamal processing is enabled.
      * @param resource  the name of the resource file that contains the Yaml/Jamal formatted parameters
+     * @param ognl      the OGNL expression that selects where the test data starts
      * @return the Yaml structure read from the file
      * @throws URISyntaxException if the file cannot be identified
      */
-    private Map<String, Map<String, Object>> getParameters(Class<?> testClass, Jamal jamal, String resource) throws URISyntaxException {
+    private Map<String, Map<String, Object>> getParameters(Class<?> testClass, Jamal jamal, String resource, String ognl) throws URISyntaxException {
         final StringBuilder sb = readResource(testClass, resource);
         try {
             final File file;
             if (resource.contains("\n")) {
                 file = null;
             } else {
-                file = Paths.get(testClass.getResource(resource).toURI()).toFile().getAbsoluteFile();
+                file = Paths.get(requireNonNull(testClass.getResource(resource)).toURI()).toFile().getAbsoluteFile();
             }
             final String processed = processWithJamal(jamal, file, sb);
-            return yaml.load(processed);
+            final Map<String, Map<String, Object>> result =  yaml.load(processed);
+            if( ognl.length() > 0 ){
+                return (Map<String, Map<String, Object>>)Ognl.getValue(ognl,(Object)result,Map.class);
+            }else{
+                return result;
+            }
         } catch (BadSyntax e) {
             throw new ExtensionConfigurationException(format("The source '%s' is not a valid Jamal source.", resource), e);
         } catch (ParserException e) {
             throw new ExtensionConfigurationException(format("The Yaml file '%s' is erroneous.", resource), e);
+        } catch (OgnlException e) {
+            throw new ExtensionConfigurationException(format("The Ognl file '%s' is erroneous.", ognl), e);
         }
     }
 
@@ -249,8 +271,8 @@ public class YamalArgumentsProvider implements ArgumentsProvider {
      * parameter dump, that specifies the output file. This file is not used by the application. It is there only for
      * debug purposes in case you want to see what Yaml was created from the Jamal file.
      *
-     * @param jamal is the Jamal annotation
-     * @param file the input file or null in case the input comes from the annotation string
+     * @param jamal     is the Jamal annotation
+     * @param file      the input file or null in case the input comes from the annotation string
      * @param processed the Jamal processed output
      */
     private void createDumpFile(Jamal jamal, File file, String processed) {
@@ -305,39 +327,82 @@ public class YamalArgumentsProvider implements ArgumentsProvider {
      * {@code jamal} of the annotation {@link YamlSource}. This is also the order how the method looks for this
      * annotation.
      *
-     * @param testMethod       the test method, which may be annotated with @{@link Jamal}
-     * @param testClass        the class that may also be annotated with @{@link Jamal}
-     * @param methodAnnotation the YamlSource annotation instance that may have jamalJamal parameter.
+     * @param testMethod the test method, which may be annotated with @{@link Jamal}
      * @return a @{@link Jamal} annotation instance (may be the the default if not specified anywhere).
      */
-    private Jamal getJamalAnnotation(java.lang.reflect.Method testMethod, Class<?> testClass, YamlSource methodAnnotation) {
-        final var jamalOnMethod = findAnnotation(testMethod, Jamal.class);
-        final var jamalOnClass = findAnnotation(testClass, Jamal.class);
-        final var jamalInAnnotation = methodAnnotation.jamal();
-        final var jamalInAnnotationIsDefault = jamalInAnnotation.open().equals("\u0000");
-        if (jamalOnMethod.isPresent() && !jamalInAnnotationIsDefault) {
-            throw new ExtensionConfigurationException(
-                format("You cannot have a @%s annotation on the method and also on the 'jamal' parameter of the @%s annotation on the test method '%s::%s'.",
-                    Jamal.class.getSimpleName(),
-                    YamlSource.class.getSimpleName(),
-                    testClass.getName(), testMethod.getName()));
+    private Jamal getJamalAnnotation(java.lang.reflect.Method testMethod) {
+        final var annotations = new ArrayList<Jamal>();
+        addJamalAnnotation(testMethod, annotations);
+        var klass = testMethod.getDeclaringClass();
+        while (klass != null) {
+            addJamalAnnotation(klass, annotations);
+            klass = klass.getDeclaringClass();
         }
-        final var jamal = jamalOnMethod
-            .orElseGet(() -> (jamalInAnnotationIsDefault ? jamalOnClass : Optional.of(jamalInAnnotation))
-                .orElseGet(() -> new JamalDefault()));
+        final var jamal = new Jamal.Collected();
+        for (int i = annotations.size() - 1; i >= 0; i--) {
+            final var inheritFrom = annotations.get(i);
+            if (inheritFrom.open().length() != 0) {
+                jamal.open = inheritFrom.open();
+            }
+            if (inheritFrom.close().length() != 0) {
+                jamal.close = inheritFrom.close();
+            }
+            if (inheritFrom.dump().length() != 0) {
+                jamal.dump = inheritFrom.dump();
+            }
+            jamal.enabled = inheritFrom.enabled();
+        }
+        if (jamal.open == null || jamal.open().equals("")) {
+            jamal.open = "{%";
+        }
+        if (jamal.close == null || jamal.close().equals("")) {
+            jamal.close = "%}";
+        }
         return jamal;
     }
 
+    private void addJamalAnnotation(AnnotatedElement testMethod, List<Jamal> annotations) {
+        final var jamalOnMethod = findAnnotation(testMethod, Jamal.class);
+        final var jamalOnMethodAnnotation = findAnnotation(testMethod, YamlSource.class).map(YamlSource::jamal).filter(j -> !j.open().equals("\u0000"));
+        if (jamalOnMethod.isPresent() && jamalOnMethodAnnotation.isPresent()) {
+            throw new IllegalArgumentException("You cannot have @Jamal annotation on a test method or class and in the @YamlSource as well.");
+        }
+        jamalOnMethod.ifPresent(annotations::add);
+        jamalOnMethodAnnotation.ifPresent(annotations::add);
+    }
+
     /**
-     * This argument provider can only be used with test methods, which are annotated with {@link YamlSource}.
+     * This argument provider can only be used with test methods, which are annotated with {@link YamlSource}. The
+     * annotation can also be specified on the declaring class. In this case the string (value and ognl) values that are
+     * defined on the class but not on the method are inherited from the annotation on the class. The inheritance walks
+     * through the whole inner cluss structure in case the method is in an inner class. In that case the annotation
+     * parameters are inherited from the inner classes as well as from the top level class if there is any.
      *
      * @param testMethod the test method
      * @return the annotation object that controls the execution of this run of this argument provider
      */
     private YamlSource getYamlSourceAnnotation(Method testMethod) {
-        final var yamlSource = findAnnotation(testMethod, YamlSource.class)
+        final var annotations = new ArrayList<YamlSource>();
+        final var yamlSourceOnMethod = findAnnotation(testMethod, YamlSource.class)
             .orElseThrow(() -> new ExtensionConfigurationException(format("Test method is not annotated with '@%s'",
                 YamlSource.class.getSimpleName())));
+        annotations.add(yamlSourceOnMethod);
+        var klass = testMethod.getDeclaringClass();
+        while (klass != null) {
+            findAnnotation(klass, YamlSource.class).ifPresent(annotations::add);
+            klass = klass.getDeclaringClass();
+        }
+        final var yamlSource = new YamlSource.Collected();
+        for (int i = annotations.size() - 1; i >= 0; i--) {
+            final var inheritFrom = annotations.get(i);
+            if (inheritFrom.ognl().length() != 0) {
+                yamlSource.ognl = inheritFrom.ognl();
+            }
+            if (inheritFrom.value().length() != 0) {
+                yamlSource.value = inheritFrom.value();
+            }
+            yamlSource.strict = inheritFrom.strict();
+        }
         return yamlSource;
     }
 

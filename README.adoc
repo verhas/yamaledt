@@ -2,17 +2,19 @@
 
 === Introduction and usage
 
+NOTE: This is the latest, probably SNAPSHOT release documentation.
+For the last release visit the page https://github.com/verhas/yamaledt/tree/1.0.0[1.0.0]
+
 You can create parameterized unit tests fetching the data from Yaml formatted resource file using Yamaledt.
 To use the possibility add the dependency to your build configuration.
 In case of Maven, for example, add the following lines to your `dependencies` configuration part:
-
 
 [source,xml]
 ----
 <dependency>
     <groupId>com.javax0.yamaledt</groupId>
     <artifactId>yamaledt</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
     <scope>test</scope>
 </dependency>
 ----
@@ -38,7 +40,7 @@ The JUnit 5 annotation `@ParameterizedTest` signals that this test is a paramete
 The annotation `@YamlSource` specifies the test data source.
 In this case all the settings are the default, there are no arguments.
 The data will be read from the resource file `sampleTestWithSimpleParameters.yaml`.
-The name is calculated from the name of the test method and the extension `.yaml` is appended to it.
+The name is calculated from the name of the test method, and the extension `.yaml` is appended to it.
 
 NOTE: The extension by default is `.yaml.jam`.
 In the example above we disabled the Jamal processing and therefore the default extension became `.yaml`.
@@ -94,6 +96,17 @@ image::images/idea_sample_run.png[]
 
 The annotation `@YamlSource` is used to specify parameters for the test.
 You have to use it together with the annotation `@ParameterizedTest`.
+
+You have to use this annotation on the test method.
+The use of the annotation instructs JUnit 5 to execute the test as a parameterized test, and to use the `YamalArgumentsProvider`, which implements the Yaml data source handling for parameterized tests.
+The annotation can define parameters for the parameters, like the name of the Yaml file.
+
+The annotation can also be applied to the enclosing class.
+This is useful in case annotation parameters are shared by multiple test methods.
+The annotation on the class can define these parameters, and the methods inherit the value from there.
+For example, you can use the same single Yaml file for test parameter storage and provide an OGNL expression to point to the data of the individual tests.
+In this case the name of the file can be provided on the class, shared, and the different OGNL expressions can be defined in the annotations on the methods.
+
 The parameters of the annotation are:
 
 * `value` may specify the file that holds the test data.
@@ -102,10 +115,15 @@ The extension `.yaml.jam` is used by default.
 The extension `.yaml` is used when the `@Jamal` annotation `enabled=false` disables the Jamal processing.
 If there is a specified value, then the value is used as a resource name, and no extension is appended to the name.
 That way you have to specify `@YamlSource("testData.yaml")`.
+The name of the method is only considered a file name if the annotation does not define a value on the method and also not on any of the enclosing classes.
 
 * `jamal` may specify a `@Jamal` annotation.
 The use of this parameter is not recommended.
 The same result can be achieved adding the `@Jamal` annotation directly on the test method or on the class containing the test method.
+
+* `ognl` may specify an https://commons.apache.org/proper/commons-ognl/[OGNL expression].
+If this value is defined then the test environment uses only the structure pointed by this expression as test data.
+Using this along with putting a `@YamlSource` annotation on the class you can use
 
 === Annotation `@Jamal`
 

@@ -1,13 +1,20 @@
+{%#define YamlSource($x)={%@java:class (format="`@$simpleName{%@if/$x/($x)/%}`") javax0.yamaledt.YamlSource%}%}\
+{%#define Jamal={%@java:class (format="`@$simpleName`") javax0.yamaledt.Jamal%}%}\
+{%#define DisplayName={%@java:class (format=`@$simpleName`)org.junit.jupiter.api.DisplayName%}%}\
+{%#define Name($x)={%@java:class (format="`@$simpleName{%@if/$x/($x)/%}`")javax0.yamaledt.Name%}%}\
+{%#define ParameterizedTest={%@java:class (format=`@$simpleName`) org.junit.jupiter.params.ParameterizedTest%}%}\
+{%@options lenient%}\
+{%@import version.jim%}\
 == Yamaledt -- JUnit 5 Parameterized Tests Using Yaml and Jamal
 
 === Introduction and usage
 
+NOTE: This is the latest, probably SNAPSHOT release documentation.
+For the last release visit the page https://github.com/verhas/yamaledt/tree/{%LATEST_RELEASE%}[{%LATEST_RELEASE%}]
+
 You can create parameterized unit tests fetching the data from Yaml formatted resource file using Yamaledt.
 To use the possibility add the dependency to your build configuration.
 In case of Maven, for example, add the following lines to your `dependencies` configuration part:
-
-{%@snip:xml pom=pom.xml%}\
-{%#define VERSION={%pom /project/version/text()%}%}\
 
 [source,xml]
 ----
@@ -28,11 +35,11 @@ The next step is to create a parameterized test, and the Yaml file that holds th
 {%@snip sampleTestWithSimpleParameters%}
 ----
 
-The JUnit 5 annotation {%@java:class (format=`@$simpleName`) org.junit.jupiter.params.ParameterizedTest%} signals that this test is a parameterized test.
-The annotation {%@java:class (format=`@$simpleName`) javax0.yamaledt.YamlSource%} specifies the test data source.
+The JUnit 5 annotation {%ParameterizedTest%} signals that this test is a parameterized test.
+The annotation {%YamlSource%} specifies the test data source.
 In this case all the settings are the default, there are no arguments.
 The data will be read from the resource file {%@java:method (format=`$name.yaml`) javax0.yamaledt.TestYamalArgumentProvider#sampleTestWithSimpleParameters%}.
-The name is calculated from the name of the test method and the extension `.yaml` is appended to it.
+The name is calculated from the name of the test method, and the extension `.yaml` is appended to it.
 
 NOTE: The extension by default is `.yaml.jam`.
 In the example above we disabled the Jamal processing and therefore the default extension became `.yaml`.
@@ -48,22 +55,22 @@ The Yaml data source file contains the data in the format:
 
 The Yaml file describes a Map structure.
 The keys are the test names.
-These are the strings that will get into the place of the strings, which are defined using the {%@java:class (format=`@$simpleName`)org.junit.jupiter.api.DisplayName%} annotation in non-parameterized tests.
+These are the strings that will get into the place of the strings, which are defined using the {%DisplayName%} annotation in non-parameterized tests.
 The value for each key/test is also a Map specifying the values for the test parameters.
 
 The mapping of values can be based on
 
 * the type of the method arguments, or
 
-* the value of the annotation {%@java:class (format=`@$simpleName`)javax0.yamaledt.Name%}.
+* the value of the annotation {%Name/%}.
 
 In the example above we have three parameters.
 
-* One is named using {%@java:class (format="`@$simpleName(\"DisplayName\")`") javax0.yamaledt.Name%},
+* One is named using {%Name/"DisplayName"%},
 
 * one unnamed, and
 
-* one named using {%@java:class (format="`@$simpleName(\"k\")`") javax0.yamaledt.Name%}.
+* one named using {%Name/"k"%}.
 
 In the Yaml file the main key, is used for the parameter named 'DisplayName'.
 For the unnamed parameter the type is used, which is, in this case is `int`.
@@ -73,10 +80,21 @@ Running this test from an IDE will result a view something like this:
 
 image::images/idea_sample_run.png[]
 
-=== Annotation {%@java:class (format="`@$simpleName`") javax0.yamaledt.YamlSource%}
+=== Annotation {%YamlSource%}
 
-The annotation {%@java:class (format="`@$simpleName`") javax0.yamaledt.YamlSource%} is used to specify parameters for the test.
-You have to use it together with the annotation {%@java:class (format=`@$simpleName`) org.junit.jupiter.params.ParameterizedTest%}.
+The annotation {%YamlSource%} is used to specify parameters for the test.
+You have to use it together with the annotation {%ParameterizedTest%}.
+
+You have to use this annotation on the test method.
+The use of the annotation instructs JUnit 5 to execute the test as a parameterized test, and to use the {%@java:class (format=`$simpleName`)javax0.yamaledt.YamalArgumentsProvider%}, which implements the Yaml data source handling for parameterized tests.
+The annotation can define parameters for the parameters, like the name of the Yaml file.
+
+The annotation can also be applied to the enclosing class.
+This is useful in case annotation parameters are shared by multiple test methods.
+The annotation on the class can define these parameters, and the methods inherit the value from there.
+For example, you can use the same single Yaml file for test parameter storage and provide an OGNL expression to point to the data of the individual tests.
+In this case the name of the file can be provided on the class, shared, and the different OGNL expressions can be defined in the annotations on the methods.
+
 The parameters of the annotation are:
 
 * `value` may specify the file that holds the test data.
@@ -84,15 +102,20 @@ If it is not specified then the name of the name of the test method will be used
 The extension `.yaml.jam` is used by default.
 The extension `.yaml` is used when the `@Jamal` annotation `enabled=false` disables the Jamal processing.
 If there is a specified value, then the value is used as a resource name, and no extension is appended to the name.
-That way you have to specify {%@java:class (format="`@$simpleName(\"testData.yaml\")`") javax0.yamaledt.YamlSource%}.
+That way you have to specify {%YamlSource/"testData.yaml"%}.
+The name of the method is only considered a file name if the annotation does not define a value on the method and also not on any of the enclosing classes.
 
 * `jamal` may specify a `@Jamal` annotation.
 The use of this parameter is not recommended.
 The same result can be achieved adding the `@Jamal` annotation directly on the test method or on the class containing the test method.
 
-=== Annotation {%@java:class (format="`@$simpleName`") javax0.yamaledt.Jamal%}
+* `ognl` may specify an https://commons.apache.org/proper/commons-ognl/[OGNL expression].
+If this value is defined then the test environment uses only the structure pointed by this expression as test data.
+Using this along with putting a {%YamlSource%} annotation on the class you can use
 
-The annotation {%@java:class (format="`@$simpleName`") javax0.yamaledt.Jamal%} is used to specify parameters for the input Jamal processing.
+=== Annotation {%Jamal%}
+
+The annotation {%Jamal%} is used to specify parameters for the input Jamal processing.
 
 Jamal is a general purpose text preprocessor that can go to extreme to eliminate input redundancy and copy-paste.
 This way the data structures that appear repeatedly in the test data structure can be described programmatically.
