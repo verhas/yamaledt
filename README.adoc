@@ -4,7 +4,7 @@
 
 NOTE: This is the latest development documentation.
 This is a SNAPSHOT version.
-To see the documentation of a release you have to follow the link in the documentation `RELEASES.adoc`
+To see the documentation of a release you have to follow the link in the documentation link:RELEASES.adoc[`RELEASES.adoc`]
 
 
 You can create parameterized unit tests fetching the data from Yaml formatted resource file using Yamaledt.
