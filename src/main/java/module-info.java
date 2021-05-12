@@ -1,7 +1,8 @@
 module yamaledt {
-    requires org.junit.platform.commons;
-    requires org.junit.jupiter.params;
-    requires org.junit.jupiter.api;
+    requires transitive org.junit.platform.commons;
+    requires transitive org.junit.jupiter.params;
+    requires transitive org.junit.jupiter.api;
+    requires transitive org.junit.jupiter.engine;
     requires jamal.engine;
     requires jamal.tools;
     requires jamal.api;
