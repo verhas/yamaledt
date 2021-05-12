@@ -3,6 +3,10 @@
 
 
 
+=== https://github.com/verhas/yamaledt/tree/1.1.1[1.1.1]
+
+Jamal dependency upped to 1.7.6
+
 === https://github.com/verhas/yamaledt/tree/1.1.0[1.1.0]
 
 With this release, you can use the annotations also on the test class, and you can inherit the parameters from the class.

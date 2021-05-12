@@ -5,7 +5,7 @@
     <packaging>jar</packaging>
     <groupId>com.javax0.yamaledt</groupId>
     <artifactId>yamaledt</artifactId>
-    <version>1.1.1</version>
+    <version>1.1.2-SNAPSHOT</version>
     <description>Library to support JUnit 5 parametrized tests that fetch the parameters from Yaml file</description>
     <licenses>
         <license>
