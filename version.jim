@@ -22,4 +22,4 @@
 {@define OGNL_VERSION=3.2.20}
 {@define SNAKEYAML_VERSION=1.21}
 {@define SONATYPE_PLUGIN=1.6.8}
-{@define JAMAL_VERSION=1.7.6}
+{@define JAMAL_VERSION=1.7.5}
