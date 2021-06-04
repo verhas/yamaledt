@@ -1,4 +1,4 @@
-{@define VERSION=1.1.2-SNAPSHOT}
+{@define VERSION=1.1.2}
 
 -- This file defines the version of the project.
 -- This is more effective than defining the project version in a maven property because that cannot be used to reference the parent.
@@ -20,6 +20,6 @@
 {@define JUNIT5_VERSION=5.7.0}
 {@define SUREFIRE_VERSION=3.0.0-M5}
 {@define OGNL_VERSION=3.2.20}
-{@define SNAKEYAML_VERSION=1.21}
+{@define SNAKEYAML_VERSION=1.28}
 {@define SONATYPE_PLUGIN=1.6.8}
 {@define JAMAL_VERSION=1.7.6}
