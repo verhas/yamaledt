@@ -5,7 +5,7 @@
     <packaging>jar</packaging>
     <groupId>com.javax0.yamaledt</groupId>
     <artifactId>yamaledt</artifactId>
-    <version>1.1.2</version>
+    <version>1.1.3-SNAPSHOT</version>
     <description>Library to support JUnit 5 parametrized tests that fetch the parameters from Yaml file</description>
     <licenses>
         <license>
@@ -68,7 +68,7 @@
                     <docletArtifact>
                         <groupId>com.javax0.jamal</groupId>
                         <artifactId>jamal-doclet</artifactId>
-                        <version>1.7.6</version>
+                        <version>1.10.3</version>
                     </docletArtifact>
                     <additionalOptions>
                         <additionalOption>--source-root</additionalOption>
@@ -80,14 +80,14 @@
                             <tagletArtifact>
                                 <groupId>com.javax0.jamal</groupId>
                                 <artifactId>jamal-doclet</artifactId>
-                                <version>1.7.6</version>
+                                <version>1.10.3</version>
                             </tagletArtifact>
                         </taglet>
                         <tagletArtifacts>
                             <tagletArtifact>
                                 <groupId>com.javax0.jamal</groupId>
                                 <artifactId>jamal-snippet</artifactId>
-                                <version>1.7.6</version>
+                                <version>1.10.3</version>
                             </tagletArtifact>
                         </tagletArtifacts>
                     </taglets>
@@ -155,7 +155,7 @@
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
-            <version>1.28</version>
+            <version>1.29</version>
         </dependency>
         <dependency>
             <groupId>ognl</groupId>
@@ -165,22 +165,22 @@
         <dependency>
             <groupId>com.javax0.jamal</groupId>
             <artifactId>jamal-engine</artifactId>
-            <version>1.7.6</version>
+            <version>1.10.3</version>
         </dependency>
         <dependency>
             <groupId>com.javax0.jamal</groupId>
             <artifactId>jamal-yaml</artifactId>
-            <version>1.7.6</version>
+            <version>1.10.3</version>
         </dependency>
         <dependency>
             <groupId>com.javax0.jamal</groupId>
             <artifactId>jamal-snippet</artifactId>
-            <version>1.7.6</version>
+            <version>1.10.3</version>
         </dependency>
         <dependency>
             <groupId>com.javax0.jamal</groupId>
             <artifactId>jamal-debug</artifactId>
-            <version>1.7.6</version>
+            <version>1.10.3</version>
         </dependency>
     </dependencies>
     <profiles>

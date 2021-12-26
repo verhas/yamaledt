@@ -52,8 +52,7 @@ public class TestYamalArgumentProvider {
 
     // snippet sampleTestWithSimpleParameters
     @ParameterizedTest(name = "{0}")
-    @Jamal(enabled = false)
-    @YamlSource(strict = true)
+    @YamlSource()
     void sampleTestWithSimpleParameters(@Name("DisplayName") String dn,
                                         int i,
                                         @Name("k") int k) {
@@ -80,7 +79,7 @@ public class TestYamalArgumentProvider {
 
     @ParameterizedTest(name = "{0}")
     @Jamal(dump = "testCustomClassParameterWithJamal.yaml")
-    @YamlSource("testCustomClassParameterWithJamal.yaml.jam")
+    @YamlSource("testCustomClassParameterWithJamal.yaml")
     void testCustomClassParameter1(@Name("DisplayName") String dn, CustomClass customer, @Name("result") String r) {
         Assertions.assertEquals(r, format("%d.%s.%s", customer.serial, customer.name, customer.weight));
     }

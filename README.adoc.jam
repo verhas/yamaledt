@@ -5,7 +5,7 @@
 {%#define ParameterizedTest={%@java:class (format=`@$simpleName`) org.junit.jupiter.params.ParameterizedTest%}%}\
 {%@options lenient%}\
 {%@import version.jim%}\
-== Yamaledt -- JUnit 5 Parameterized Tests Using Yaml and Jamal
+== Patuyaja -- JUnit 5 Parameterized Tests Using Yaml and Jamal
 
 === Introduction and usage
 {%#if/{%#replace(regex)|{%VERSION%}|\d+\.\d+\.\d+-SNAPSHOT|%}//
@@ -14,7 +14,7 @@ This is a SNAPSHOT version.
 To see the documentation of a release you have to follow the link in the documentation link:{%@file RELEASES.adoc%}[`RELEASES.adoc`]
 %}
 
-You can create parameterized unit tests fetching the data from Yaml formatted resource file using Yamaledt.
+You can create parameterized unit tests fetching the data from Yaml formatted resource file using Patuyaja.
 To use the possibility add the dependency to your build configuration.
 In case of Maven, for example, add the following lines to your `dependencies` configuration part:
 
@@ -43,11 +43,6 @@ In this case all the settings are the default, there are no arguments.
 The data will be read from the resource file {%@java:method (format=`$name.yaml`) javax0.yamaledt.TestYamalArgumentProvider#sampleTestWithSimpleParameters%}.
 The name is calculated from the name of the test method, and the extension `.yaml` is appended to it.
 
-NOTE: The extension by default is `.yaml.jam`.
-In the example above we disabled the Jamal processing and therefore the default extension became `.yaml`.
-Using Jamal macros in the test data file is an advanced topic.
-We do not detail it in the introduction section.
-
 The Yaml data source file contains the data in the format:
 
 [source,yaml]
@@ -58,7 +53,7 @@ The Yaml data source file contains the data in the format:
 The Yaml file describes a Map structure.
 The keys are the test names.
 These are the strings that will get into the place of the strings, which are defined using the {%DisplayName%} annotation in non-parameterized tests.
-The value for each key/test is also a Map specifying the values for the test parameters.
+The value for each test is also a Map specifying the values for the test parameters.
 
 The mapping of values can be based on
 

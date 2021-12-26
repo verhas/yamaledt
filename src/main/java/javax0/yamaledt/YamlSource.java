@@ -12,6 +12,13 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.TYPE})
 @ArgumentsSource(YamalArgumentsProvider.class)
 public @interface YamlSource {
+
+    String UNDEFINED = "\u0000";
+
+    /**
+     * An implementation of the annotation interface that can be used as an accumulator collecting the parameters
+     * from many annotation instances.
+     */
     class Collected implements YamlSource {
         String value = "";
         String ognl = "";
@@ -60,10 +67,10 @@ public @interface YamlSource {
      * documentation and find out this possibility using the automcomplete feature of the IDE. Otherwise use this
      * annotation on the method and not here as an annotation parameter.
      */
-    Jamal jamal() default @Jamal(enabled = true, open = "\u0000");
+    Jamal jamal() default @Jamal(enabled = true, open = UNDEFINED);
 
     /**
-     * Setting this {@code true} will throw error if some test parameter isnot defined (default behaviour in that case
+     * Setting this {@code true} will throw error if some test parameter is not defined (default behaviour in that case
      * is to use null) or there is a parameter in the Yaml file, which is not used by the test method. The default
      * behaviour is to be lenient.
      *
