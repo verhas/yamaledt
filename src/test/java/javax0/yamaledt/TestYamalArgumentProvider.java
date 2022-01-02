@@ -20,8 +20,8 @@ public class TestYamalArgumentProvider {
     }
 
     /**
-     * This test demonstrate how you can pass the DisplayName for each test when the name is identified by the class.
-     * {@link DisplayName} is defined in the library and it can be used to save typing the annotation on the parameter.
+     * This test demonstrates how you can pass the DisplayName for each test when the name is identified by the class.
+     * {@link DisplayName} is defined in the library, and it can be used to save typing the annotation on the parameter.
      *
      * @param dn is just the display name
      */
